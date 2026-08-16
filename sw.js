@@ -1,13 +1,14 @@
-const CACHE_NAME = 'keuangan-rt-v1';
+const CACHE_NAME = 'keuangan-app-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './manifest.json'
+  './manifest.json',
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
 ];
 
-// Inisialisasi Cache
-self.addEventListener('install', (e) => {
-  e.waitUntil(
+// Install Event - Menyimpan aset ke cache
+self.addEventListener('install', (event) => {
+  event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
     })
@@ -15,14 +16,14 @@ self.addEventListener('install', (e) => {
   self.skipWaiting();
 });
 
-// Hapus Cache Lama jika ada pembaruan
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) => {
+// Activate Event - Membersihkan cache lama jika ada pembaruan
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
       return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            return caches.delete(cache);
           }
         })
       );
@@ -31,11 +32,14 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-// Strategi Offline: Utamakan Cache, fallback ke Network
-self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    caches.match(e.request).then((cachedResponse) => {
-      return cachedResponse || fetch(e.request);
+// Fetch Event - Mengambil data dari cache saat offline
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(event.request);
     })
   );
 });

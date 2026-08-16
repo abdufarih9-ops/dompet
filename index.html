@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keuangan Rumah Tangga (IndexedDB)</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --danger: #ef4444;
+            --success: #10b981;
+            --bg: #f3f4f6;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        h2, h3 { margin-top: 0; }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .summary-box {
+            padding: 15px;
+            border-radius: 8px;
+            color: white;
+        }
+        .bg-balance { background: var(--primary); }
+        .bg-income { background: var(--success); }
+        .bg-expense { background: var(--danger); }
+        .summary-box h4 { margin: 0; font-size: 0.9em; opacity: 0.9; }
+        .summary-box p { margin: 5px 0 0; font-size: 1.5em; font-weight: bold; }
+        
+        form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+        }
+        input, select, button {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1em;
+        }
+        form button {
+            grid-column: 1 / -1;
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        form button:hover { opacity: 0.9; }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        th { background-color: #f8fafc; }
+        .btn-edit {
+            background: #f59e0b;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-delete {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .badge-income { color: var(--success); font-weight: bold; }
+        .badge-expense { color: var(--danger); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Laporan Keuangan Rumah Tangga</h2>
+
+    <!-- RINGKASAN SALDO -->
+    <div class="summary-grid">
+        <div class="summary-box bg-balance">
+            <h4>Total Saldo</h4>
+            <p id="totalBalance">Rp 0</p>
+        </div>
+        <div class="summary-box bg-income">
+            <h4>Total Pemasukan</h4>
+            <p id="totalIncome">Rp 0</p>
+        </div>
+        <div class="summary-box bg-expense">
+            <h4>Total Pengeluaran</h4>
+            <p id="totalExpense">Rp 0</p>
+        </div>
+    </div>
+
+    <!-- FORM INPUT / EDIT -->
+    <div class="card">
+        <h3 id="formTitle">Tambah Transaksi</h3>
+        <form id="transactionForm">
+            <input type="hidden" id="editId" value="">
+            <input type="date" id="date" required>
+            <select id="type" required>
+                <option value="expense">Pengeluaran</option>
+                <option value="income">Pemasukan</option>
+            </select>
+            <input type="number" id="amount" placeholder="Nominal (Rp)" required min="1">
+            <select id="account" required>
+                <option value="Tunai">Tunai / Cash</option>
+                <option value="Bank BCA">Bank BCA</option>
+                <option value="E-Wallet">E-Wallet (Gopay/Ovo/DANA)</option>
+            </select>
+            <select id="category" required>
+                <option value="Makanan">Makanan & Minuman</option>
+                <option value="Tagihan">Tagihan & Listrik</option>
+                <option value="Gaji">Gaji / Pendapatan</option>
+                <option value="Belanja">Belanja Bulanan</option>
+                <option value="Lainnya">Lainnya</option>
+            </select>
+            <input type="text" id="notes" placeholder="Catatan Tambahan">
+            <button type="submit" id="btnSubmit">Simpan Transaksi</button>
+        </form>
+    </div>
+
+    <!-- RIWAYAT TRANSAKSI -->
+    <div class="card" style="overflow-x: auto;">
+        <h3>Riwayat Transaksi</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Tanggal</th>
+                    <th>Tipe</th>
+                    <th>Kategori</th>
+                    <th>Dompet</th>
+                    <th>Nominal</th>
+                    <th>Catatan</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="transactionList">
+                <!-- Data transaksi dari IndexedDB akan muncul di sini -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let db;
+    const DB_NAME = 'HouseholdFinanceDB';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'transactions';
+
+    const form = document.getElementById('transactionForm');
+    const transactionList = document.getElementById('transactionList');
+    const formTitle = document.getElementById('formTitle');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const editIdInput = document.getElementById('editId');
+
+    document.getElementById('date').valueAsDate = new Date();
+
+    // 1. Inisialisasi IndexedDB
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onupgradeneeded = function(event) {
+        db = event.target.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+        }
+    };
+
+    request.onsuccess = function(event) {
+        db = event.target.result;
+        render(); // Render data saat DB siap
+    };
+
+    request.onerror = function(event) {
+        console.error("IndexedDB Error:", event.target.errorCode);
+    };
+
+    // 2. Fungsi Tampilkan / Read Data dari IndexedDB
+    function render() {
+        const transaction = db.transaction([STORE_NAME], 'readonly');
+        const objectStore = transaction.objectStore(STORE_NAME);
+        const getAllRequest = objectStore.getAll();
+
+        getAllRequest.onsuccess = function() {
+            const items = getAllRequest.result;
+            transactionList.innerHTML = '';
+            let totalIncome = 0;
+            let totalExpense = 0;
+
+            items.forEach((item) => {
+                const isIncome = item.type === 'income';
+                if (isIncome) totalIncome += item.amount;
+                else totalExpense += item.amount;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.date}</td>
+                    <td><span class="${isIncome ? 'badge-income' : 'badge-expense'}">${isIncome ? 'Pemasukan' : 'Pengeluaran'}</span></td>
+                    <td>${item.category}</td>
+                    <td>${item.account}</td>
+                    <td>Rp ${item.amount.toLocaleString('id-ID')}</td>
+                    <td>${item.notes || '-'}</td>
+                    <td>
+                        <button class="btn-edit" onclick="editTransaction(${item.id})">Edit</button>
+                        <button class="btn-delete" onclick="deleteTransaction(${item.id})">Hapus</button>
+                    </td>
+                `;
+                transactionList.appendChild(row);
+            });
+
+            const totalBalance = totalIncome - totalExpense;
+            document.getElementById('totalBalance').innerText = `Rp ${totalBalance.toLocaleString('id-ID')}`;
+            document.getElementById('totalIncome').innerText = `Rp ${totalIncome.toLocaleString('id-ID')}`;
+            document.getElementById('totalExpense').innerText = `Rp ${totalExpense.toLocaleString('id-ID')}`;
+        };
+    }
+
+    // 3. Simpan / Update Data (Create & Update)
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const id = editIdInput.value ? Number(editIdInput.value) : null;
+        const transactionData = {
+            date: document.getElementById('date').value,
+            type: document.getElementById('type').value,
+            amount: parseFloat(document.getElementById('amount').value),
+            account: document.getElementById('account').value,
+            category: document.getElementById('category').value,
+            notes: document.getElementById('notes').value
+        };
+
+        const tx = db.transaction([STORE_NAME], 'readwrite');
+        const objectStore = tx.objectStore(STORE_NAME);
+
+        if (id) {
+            transactionData.id = id;
+            objectStore.put(transactionData); // Mode Update
+        } else {
+            objectStore.add(transactionData); // Mode Tambah Baru
+        }
+
+        tx.oncomplete = function() {
+            render();
+            resetForm();
+        };
+    });
+
+    // 4. Ambil Data ke Form untuk Edit
+    function editTransaction(id) {
+        const tx = db.transaction([STORE_NAME], 'readonly');
+        const objectStore = tx.objectStore(STORE_NAME);
+        const getRequest = objectStore.get(id);
+
+        getRequest.onsuccess = function() {
+            const item = getRequest.result;
+            if (item) {
+                document.getElementById('date').value = item.date;
+                document.getElementById('type').value = item.type;
+                document.getElementById('amount').value = item.amount;
+                document.getElementById('account').value = item.account;
+                document.getElementById('category').value = item.category;
+                document.getElementById('notes').value = item.notes;
+
+                editIdInput.value = item.id;
+                formTitle.innerText = "Edit Transaksi";
+                btnSubmit.innerText = "Update Transaksi";
+                btnSubmit.style.background = "#f59e0b";
+            }
+        };
+    }
+
+    // 5. Hapus Data (Delete)
+    function deleteTransaction(id) {
+        if (confirm("Apakah Anda yakin ingin menghapus transaksi ini?")) {
+            const tx = db.transaction([STORE_NAME], 'readwrite');
+            const objectStore = tx.objectStore(STORE_NAME);
+            objectStore.delete(id);
+
+            tx.oncomplete = function() {
+                render();
+                resetForm();
+            };
+        }
+    }
+
+    // Reset Form
+    function resetForm() {
+        form.reset();
+        editIdInput.value = "";
+        formTitle.innerText = "Tambah Transaksi";
+        btnSubmit.innerText = "Simpan Transaksi";
+        btnSubmit.style.background = "var(--primary)";
+        document.getElementById('date').valueAsDate = new Date();
+    }
+</script>
+
+</body>
+</html>

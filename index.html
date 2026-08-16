@@ -2,25 +2,36 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Keuangan Rumah Tangga</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>KeuanganKu App</title>
+
+    <!-- Meta Setup PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2382/2382533.png">
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
         :root {
             --primary: #6366f1;
-            --primary-hover: #4f46e5;
+            --primary-dark: #4f46e5;
             --danger: #f43f5e;
             --success: #10b981;
             --warning: #f59e0b;
             --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text: #1e293b;
-            --text-muted: #64748b;
+            --card: #ffffff;
+            --text: #0f172a;
+            --muted: #64748b;
+            --nav-height: 65px;
         }
 
         * {
             box-sizing: border-box;
-            transition: all 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
         }
 
         body {
@@ -28,129 +39,119 @@
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
-            padding: 20px;
-            min-height: 100vh;
+            padding: 16px 16px calc(var(--nav-height) + 24px) 16px;
         }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        /* Header & Navigasi */
         .header {
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
-
-        .header h2 {
-            font-size: 1.8rem;
-            margin: 0 0 5px 0;
-            color: var(--text);
+        .header h1 {
+            font-size: 1.5rem;
+            margin: 0 0 4px 0;
         }
-
         .header p {
             margin: 0;
-            color: var(--text-muted);
-            font-size: 0.95rem;
+            font-size: 0.85rem;
+            color: var(--muted);
         }
 
-        .nav-tabs {
+        /* Navigasi Bawah Modern */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--nav-height);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
             display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 25px;
-            background: #e2e8f0;
-            padding: 6px;
-            border-radius: 12px;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid #e2e8f0;
+            z-index: 1000;
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
         .nav-btn {
-            flex: 1;
-            padding: 10px 16px;
+            background: none;
             border: none;
-            background: transparent;
-            border-radius: 8px;
-            font-weight: 600;
-            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--muted);
             cursor: pointer;
-            font-size: 0.9rem;
+            width: 33%;
+            font-weight: 500;
         }
 
         .nav-btn.active {
-            background: var(--card-bg);
             color: var(--primary);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            font-weight: 700;
         }
 
-        /* Ringkasan Saldo */
+        .nav-btn span {
+            font-size: 1.3rem;
+            margin-bottom: 2px;
+        }
+
+        /* Ringkasan Dashboard */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            margin-bottom: 16px;
+        }
+
         .summary-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 15px;
-            margin-bottom: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
         }
 
         .summary-box {
-            padding: 20px;
-            border-radius: 16px;
+            padding: 16px;
+            border-radius: 14px;
             color: white;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-            position: relative;
-            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
 
         .bg-balance { background: linear-gradient(135deg, #6366f1, #4338ca); }
         .bg-income { background: linear-gradient(135deg, #10b981, #047857); }
         .bg-expense { background: linear-gradient(135deg, #f43f5e, #be123c); }
 
-        .summary-box h4 {
-            margin: 0;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            opacity: 0.9;
-        }
+        .summary-box h4 { margin: 0; font-size: 0.8rem; opacity: 0.9; text-transform: uppercase; }
+        .summary-box p { margin: 6px 0 0; font-size: 1.5rem; font-weight: 700; }
 
-        .summary-box p {
-            margin: 8px 0 0;
-            font-size: 1.6rem;
-            font-weight: 700;
-        }
-
-        /* Cards & Form */
-        .card {
-            background: var(--card-bg);
-            padding: 24px;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            margin-bottom: 20px;
-        }
-
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
+        /* Form styling */
         .form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
+            gap: 12px;
         }
 
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 4px;
         }
 
         .form-group label {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 600;
-            color: var(--text-muted);
+            color: var(--muted);
         }
 
         input, select {
+            width: 100%;
             padding: 12px;
-            border: 1.5px solid #e2e8f0;
+            border: 1px solid #cbd5e1;
             border-radius: 10px;
             font-size: 0.95rem;
             outline: none;
@@ -166,7 +167,7 @@
             grid-column: 1 / -1;
             display: flex;
             gap: 10px;
-            margin-top: 10px;
+            margin-top: 8px;
         }
 
         .btn {
@@ -179,23 +180,21 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
         }
 
         .btn-primary { background: var(--primary); color: white; width: 100%; }
-        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-primary:hover { background: var(--primary-dark); }
         .btn-secondary { background: #e2e8f0; color: var(--text); }
 
-        /* Tabel & Utility Toolbar */
+        /* Toolbar & Table */
         .toolbar {
             display: flex;
-            justify-content: space-between;
             gap: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
             flex-wrap: wrap;
         }
 
-        .search-box { flex: 1; min-width: 200px; }
+        .search-box { flex: 1; min-width: 180px; }
 
         table {
             width: 100%;
@@ -205,27 +204,19 @@
 
         th, td {
             text-align: left;
-            padding: 14px 12px;
+            padding: 12px 10px;
             border-bottom: 1px solid #f1f5f9;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
-        th {
-            color: var(--text-muted);
-            font-weight: 600;
-            background: #f8fafc;
-        }
-
-        tr:last-child td { border-bottom: none; }
+        th { color: var(--muted); font-weight: 600; background: #f8fafc; }
 
         .badge {
-            padding: 4px 10px;
-            border-radius: 20px;
+            padding: 4px 8px;
+            border-radius: 12px;
             font-size: 0.75rem;
             font-weight: 600;
-            display: inline-block;
         }
-
         .badge-income { background: #d1fae5; color: #065f46; }
         .badge-expense { background: #ffe4e6; color: #9f1239; }
 
@@ -233,32 +224,16 @@
             border: none;
             background: transparent;
             cursor: pointer;
-            font-size: 1rem;
-            padding: 4px 8px;
-            border-radius: 6px;
-        }
-        .btn-action:hover { background: #f1f5f9; }
-
-        @media (max-width: 600px) {
-            body { padding: 12px; }
-            .card { padding: 16px; }
-            .form-grid { grid-template-columns: 1fr; }
+            font-size: 0.9rem;
+            padding: 4px;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
     <div class="header">
-        <h2>💰 Catatan Keuangan</h2>
-        <p>Kelola arus kas rumah tangga dengan mudah</p>
-    </div>
-
-    <!-- NAVIGASI TAB -->
-    <div class="nav-tabs">
-        <button class="nav-btn active" onclick="switchTab('dashboard')">Dashboard</button>
-        <button class="nav-btn" onclick="switchTab('form')">Tambah Transaksi</button>
-        <button class="nav-btn" onclick="switchTab('history')">Riwayat</button>
+        <h1>KeuanganKu 💸</h1>
+        <p>Catatan keuangan praktis berbasis PWA</p>
     </div>
 
     <!-- TAB 1: DASHBOARD -->
@@ -269,17 +244,17 @@
                 <p id="totalBalance">Rp 0</p>
             </div>
             <div class="summary-box bg-income">
-                <h4>Pemasukan</h4>
+                <h4>Total Pemasukan</h4>
                 <p id="totalIncome">Rp 0</p>
             </div>
             <div class="summary-box bg-expense">
-                <h4>Pengeluaran</h4>
+                <h4>Total Pengeluaran</h4>
                 <p id="totalExpense">Rp 0</p>
             </div>
         </div>
 
         <div class="card">
-            <h3>Transaksi Terakhir</h3>
+            <h3 style="margin-top:0;">Transaksi Terakhir</h3>
             <div style="overflow-x: auto;">
                 <table>
                     <thead>
@@ -295,10 +270,10 @@
         </div>
     </div>
 
-    <!-- TAB 2: FORM INPUT -->
+    <!-- TAB 2: TAMBAH / EDIT TRANSAKSI -->
     <div id="tab-form" class="tab-content">
         <div class="card">
-            <h3 id="formTitle">Tambah Transaksi Baru</h3>
+            <h3 id="formTitle" style="margin-top:0;">Tambah Transaksi</h3>
             <form id="transactionForm" class="form-grid">
                 <input type="hidden" id="editId">
                 
@@ -317,7 +292,7 @@
 
                 <div class="form-group">
                     <label>Nominal (Rp)</label>
-                    <input type="number" id="amount" placeholder="Contoh: 50000" required min="1">
+                    <input type="number" id="amount" placeholder="Nominal" required min="1">
                 </div>
 
                 <div class="form-group">
@@ -325,7 +300,7 @@
                     <select id="account" required>
                         <option value="Tunai">💵 Tunai / Cash</option>
                         <option value="Bank BCA">🏦 Bank BCA</option>
-                        <option value="E-Wallet">📱 E-Wallet (Gopay/DANA)</option>
+                        <option value="E-Wallet">📱 E-Wallet (Gopay/DANA/OVO)</option>
                     </select>
                 </div>
 
@@ -334,15 +309,15 @@
                     <select id="category" required>
                         <option value="Makanan">🍱 Makanan & Minuman</option>
                         <option value="Tagihan">⚡ Tagihan & Listrik</option>
-                        <option value="Gaji">💼 Gaji / Utama</option>
+                        <option value="Gaji">💼 Gaji / Pendapatan</option>
                         <option value="Belanja">🛒 Belanja Bulanan</option>
                         <option value="Lainnya">📦 Lainnya</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>Catatan</label>
-                    <input type="text" id="notes" placeholder="Contoh: Beli Bensin">
+                    <label>Catatan Tambahan</label>
+                    <input type="text" id="notes" placeholder="Catatan">
                 </div>
 
                 <div class="btn-group">
@@ -353,7 +328,7 @@
         </div>
     </div>
 
-    <!-- TAB 3: RIWAYAT & TOOLBAR -->
+    <!-- TAB 3: RIWAYAT LENGKAP -->
     <div id="tab-history" class="tab-content">
         <div class="card">
             <div class="toolbar">
@@ -363,7 +338,7 @@
                     <option value="income">Pemasukan</option>
                     <option value="expense">Pengeluaran</option>
                 </select>
-                <button class="btn btn-secondary" onclick="exportCSV()">📥 Ekspor CSV</button>
+                <button class="btn btn-secondary" onclick="exportCSV()">📥 Export CSV</button>
             </div>
 
             <div style="overflow-x: auto;">
@@ -384,9 +359,38 @@
             </div>
         </div>
     </div>
-</div>
+
+    <!-- BOTTOM APP NAVIGATION -->
+    <nav class="bottom-nav">
+        <button class="nav-btn active" onclick="switchTab('dashboard', this)">
+            <span>🏠</span> Beranda
+        </button>
+        <button class="nav-btn" onclick="switchTab('form', this)">
+            <span>➕</span> Tambah
+        </button>
+        <button class="nav-btn" onclick="switchTab('history', this)">
+            <span>📋</span> Riwayat
+        </button>
+    </nav>
 
 <script>
+    // 1. Service Worker Registration (PWA)
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+            .then(() => console.log("Service Worker Active"))
+            .catch(err => console.log("SW Fail:", err));
+    }
+
+    // 2. Tab Switcher
+    function switchTab(tabName, el) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+        
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+        if(el) el.classList.add('active');
+    }
+
+    // 3. IndexedDB Initialization
     let db;
     let allData = [];
     const DB_NAME = 'HouseholdFinanceDB';
@@ -394,16 +398,6 @@
 
     document.getElementById('date').valueAsDate = new Date();
 
-    // Navigasi Tab
-    function switchTab(tabName) {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-        
-        document.getElementById(`tab-${tabName}`).classList.add('active');
-        event.currentTarget.classList.add('active');
-    }
-
-    // Inisialisasi IndexedDB
     const request = indexedDB.open(DB_NAME, 1);
     request.onupgradeneeded = (e) => {
         db = e.target.result;
@@ -416,13 +410,13 @@
         render();
     };
 
-    // Render Data
+    // 4. Render Data Function
     function render() {
         const tx = db.transaction([STORE_NAME], 'readonly');
         const store = tx.objectStore(STORE_NAME);
         
         store.getAll().onsuccess = (e) => {
-            allData = e.target.result.reverse(); // Terbaru di atas
+            allData = e.target.result.reverse();
             
             let totalIncome = 0;
             let totalExpense = 0;
@@ -437,7 +431,7 @@
             recentEl.innerHTML = '';
 
             const filteredData = allData.filter(item => {
-                const matchesSearch = item.notes.toLowerCase().includes(searchKeyword) || item.category.toLowerCase().includes(searchKeyword);
+                const matchesSearch = (item.notes && item.notes.toLowerCase().includes(searchKeyword)) || item.category.toLowerCase().includes(searchKeyword);
                 const matchesType = filterType === 'all' || item.type === filterType;
                 return matchesSearch && matchesType;
             });
@@ -447,7 +441,7 @@
                 else totalExpense += item.amount;
             });
 
-            // Tampilkan Transaksi Terakhir di Dashboard (Maksimal 5)
+            // Tampilkan 5 Transaksi Terakhir di Dashboard
             allData.slice(0, 5).forEach(item => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -479,14 +473,14 @@
                 listEl.appendChild(row);
             });
 
-            // Update Ringkasan Saldo
+            // Update Saldo
             document.getElementById('totalBalance').innerText = `Rp ${(totalIncome - totalExpense).toLocaleString('id-ID')}`;
             document.getElementById('totalIncome').innerText = `Rp ${totalIncome.toLocaleString('id-ID')}`;
             document.getElementById('totalExpense').innerText = `Rp ${totalExpense.toLocaleString('id-ID')}`;
         };
     }
 
-    // Simpan / Edit Data
+    // 5. Simpan / Edit Data
     document.getElementById('transactionForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const id = document.getElementById('editId').value ? Number(document.getElementById('editId').value) : null;
@@ -513,11 +507,12 @@
         tx.oncomplete = () => {
             render();
             resetForm();
-            switchTab('dashboard');
+            const navBtns = document.querySelectorAll('.nav-btn');
+            switchTab('dashboard', navBtns[0]);
         };
     });
 
-    // Edit Data
+    // 6. Ambil Data ke Form untuk Edit
     function editTransaction(id) {
         const tx = db.transaction([STORE_NAME], 'readonly');
         tx.objectStore(STORE_NAME).get(id).onsuccess = (e) => {
@@ -533,14 +528,15 @@
                 document.getElementById('editId').value = item.id;
                 document.getElementById('formTitle').innerText = "Edit Transaksi";
                 document.getElementById('btnSubmit').innerText = "Update Transaksi";
-                document.getElementById('btnCancel').style.display = "inline-block";
+                document.getElementById('btnCancel').style.display = "inline-flex";
                 
-                switchTab('form');
+                const navBtns = document.querySelectorAll('.nav-btn');
+                switchTab('form', navBtns[1]);
             }
         };
     }
 
-    // Hapus Data
+    // 7. Hapus Transaksi
     function deleteTransaction(id) {
         if (confirm("Apakah Anda yakin ingin menghapus transaksi ini?")) {
             const tx = db.transaction([STORE_NAME], 'readwrite');
@@ -549,17 +545,17 @@
         }
     }
 
-    // Reset Form
+    // 8. Reset Form
     function resetForm() {
         document.getElementById('transactionForm').reset();
         document.getElementById('editId').value = "";
-        document.getElementById('formTitle').innerText = "Tambah Transaksi Baru";
+        document.getElementById('formTitle').innerText = "Tambah Transaksi";
         document.getElementById('btnSubmit').innerText = "Simpan Transaksi";
         document.getElementById('btnCancel').style.display = "none";
         document.getElementById('date').valueAsDate = new Date();
     }
 
-    // Fitur Ekspor ke CSV
+    // 9. Ekspor ke Excel (CSV)
     function exportCSV() {
         if (allData.length === 0) return alert("Belum ada data untuk diekspor!");
         

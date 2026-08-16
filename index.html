@@ -3,251 +3,494 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Keuangan Rumah Tangga (IndexedDB)</title>
+    <title>Keuangan Rumah Tangga</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #4f46e5;
-            --danger: #ef4444;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --danger: #f43f5e;
             --success: #10b981;
-            --bg: #f3f4f6;
+            --warning: #f59e0b;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
         }
+
+        * {
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', sans-serif;
             background-color: var(--bg);
+            color: var(--text);
             margin: 0;
             padding: 20px;
-            color: #333;
+            min-height: 100vh;
         }
+
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
         }
-        .card {
-            background: white;
-            padding: 20px;
+
+        /* Header & Navigasi */
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header h2 {
+            font-size: 1.8rem;
+            margin: 0 0 5px 0;
+            color: var(--text);
+        }
+
+        .header p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+            background: #e2e8f0;
+            padding: 6px;
             border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .nav-btn.active {
+            background: var(--card-bg);
+            color: var(--primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* Ringkasan Saldo */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .summary-box {
+            padding: 20px;
+            border-radius: 16px;
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bg-balance { background: linear-gradient(135deg, #6366f1, #4338ca); }
+        .bg-income { background: linear-gradient(135deg, #10b981, #047857); }
+        .bg-expense { background: linear-gradient(135deg, #f43f5e, #be123c); }
+
+        .summary-box h4 {
+            margin: 0;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.9;
+        }
+
+        .summary-box p {
+            margin: 8px 0 0;
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+
+        /* Cards & Form */
+        .card {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
             margin-bottom: 20px;
         }
-        h2, h3 { margin-top: 0; }
-        .summary-grid {
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
-            margin-bottom: 20px;
         }
-        .summary-box {
-            padding: 15px;
-            border-radius: 8px;
-            color: white;
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
-        .bg-balance { background: var(--primary); }
-        .bg-income { background: var(--success); }
-        .bg-expense { background: var(--danger); }
-        .summary-box h4 { margin: 0; font-size: 0.9em; opacity: 0.9; }
-        .summary-box p { margin: 5px 0 0; font-size: 1.5em; font-weight: bold; }
-        
-        form {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 10px;
+
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
         }
-        input, select, button {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 1em;
+
+        input, select {
+            padding: 12px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            outline: none;
+            font-family: inherit;
         }
-        form button {
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        .btn-group {
             grid-column: 1 / -1;
-            background: var(--primary);
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        form button:hover { opacity: 0.9; }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
+            display: flex;
+            gap: 10px;
             margin-top: 10px;
         }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-primary { background: var(--primary); color: white; width: 100%; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-secondary { background: #e2e8f0; color: var(--text); }
+
+        /* Tabel & Utility Toolbar */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .search-box { flex: 1; min-width: 200px; }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
         th, td {
             text-align: left;
-            padding: 12px;
-            border-bottom: 1px solid #ddd;
+            padding: 14px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.9rem;
         }
-        th { background-color: #f8fafc; }
-        .btn-edit {
-            background: #f59e0b;
-            color: white;
+
+        th {
+            color: var(--text-muted);
+            font-weight: 600;
+            background: #f8fafc;
+        }
+
+        tr:last-child td { border-bottom: none; }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-income { background: #d1fae5; color: #065f46; }
+        .badge-expense { background: #ffe4e6; color: #9f1239; }
+
+        .btn-action {
             border: none;
-            padding: 6px 10px;
-            border-radius: 4px;
+            background: transparent;
             cursor: pointer;
+            font-size: 1rem;
+            padding: 4px 8px;
+            border-radius: 6px;
         }
-        .btn-delete {
-            background: var(--danger);
-            color: white;
-            border: none;
-            padding: 6px 10px;
-            border-radius: 4px;
-            cursor: pointer;
+        .btn-action:hover { background: #f1f5f9; }
+
+        @media (max-width: 600px) {
+            body { padding: 12px; }
+            .card { padding: 16px; }
+            .form-grid { grid-template-columns: 1fr; }
         }
-        .badge-income { color: var(--success); font-weight: bold; }
-        .badge-expense { color: var(--danger); font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Laporan Keuangan Rumah Tangga</h2>
+    <div class="header">
+        <h2>💰 Catatan Keuangan</h2>
+        <p>Kelola arus kas rumah tangga dengan mudah</p>
+    </div>
 
-    <!-- RINGKASAN SALDO -->
-    <div class="summary-grid">
-        <div class="summary-box bg-balance">
-            <h4>Total Saldo</h4>
-            <p id="totalBalance">Rp 0</p>
+    <!-- NAVIGASI TAB -->
+    <div class="nav-tabs">
+        <button class="nav-btn active" onclick="switchTab('dashboard')">Dashboard</button>
+        <button class="nav-btn" onclick="switchTab('form')">Tambah Transaksi</button>
+        <button class="nav-btn" onclick="switchTab('history')">Riwayat</button>
+    </div>
+
+    <!-- TAB 1: DASHBOARD -->
+    <div id="tab-dashboard" class="tab-content active">
+        <div class="summary-grid">
+            <div class="summary-box bg-balance">
+                <h4>Total Saldo</h4>
+                <p id="totalBalance">Rp 0</p>
+            </div>
+            <div class="summary-box bg-income">
+                <h4>Pemasukan</h4>
+                <p id="totalIncome">Rp 0</p>
+            </div>
+            <div class="summary-box bg-expense">
+                <h4>Pengeluaran</h4>
+                <p id="totalExpense">Rp 0</p>
+            </div>
         </div>
-        <div class="summary-box bg-income">
-            <h4>Total Pemasukan</h4>
-            <p id="totalIncome">Rp 0</p>
-        </div>
-        <div class="summary-box bg-expense">
-            <h4>Total Pengeluaran</h4>
-            <p id="totalExpense">Rp 0</p>
+
+        <div class="card">
+            <h3>Transaksi Terakhir</h3>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Kategori</th>
+                            <th>Nominal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentList"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <!-- FORM INPUT / EDIT -->
-    <div class="card">
-        <h3 id="formTitle">Tambah Transaksi</h3>
-        <form id="transactionForm">
-            <input type="hidden" id="editId" value="">
-            <input type="date" id="date" required>
-            <select id="type" required>
-                <option value="expense">Pengeluaran</option>
-                <option value="income">Pemasukan</option>
-            </select>
-            <input type="number" id="amount" placeholder="Nominal (Rp)" required min="1">
-            <select id="account" required>
-                <option value="Tunai">Tunai / Cash</option>
-                <option value="Bank BCA">Bank BCA</option>
-                <option value="E-Wallet">E-Wallet (Gopay/Ovo/DANA)</option>
-            </select>
-            <select id="category" required>
-                <option value="Makanan">Makanan & Minuman</option>
-                <option value="Tagihan">Tagihan & Listrik</option>
-                <option value="Gaji">Gaji / Pendapatan</option>
-                <option value="Belanja">Belanja Bulanan</option>
-                <option value="Lainnya">Lainnya</option>
-            </select>
-            <input type="text" id="notes" placeholder="Catatan Tambahan">
-            <button type="submit" id="btnSubmit">Simpan Transaksi</button>
-        </form>
+    <!-- TAB 2: FORM INPUT -->
+    <div id="tab-form" class="tab-content">
+        <div class="card">
+            <h3 id="formTitle">Tambah Transaksi Baru</h3>
+            <form id="transactionForm" class="form-grid">
+                <input type="hidden" id="editId">
+                
+                <div class="form-group">
+                    <label>Tanggal</label>
+                    <input type="date" id="date" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Tipe Transaksi</label>
+                    <select id="type" required>
+                        <option value="expense">💸 Pengeluaran</option>
+                        <option value="income">💵 Pemasukan</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Nominal (Rp)</label>
+                    <input type="number" id="amount" placeholder="Contoh: 50000" required min="1">
+                </div>
+
+                <div class="form-group">
+                    <label>Sumber / Dompet</label>
+                    <select id="account" required>
+                        <option value="Tunai">💵 Tunai / Cash</option>
+                        <option value="Bank BCA">🏦 Bank BCA</option>
+                        <option value="E-Wallet">📱 E-Wallet (Gopay/DANA)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Kategori</label>
+                    <select id="category" required>
+                        <option value="Makanan">🍱 Makanan & Minuman</option>
+                        <option value="Tagihan">⚡ Tagihan & Listrik</option>
+                        <option value="Gaji">💼 Gaji / Utama</option>
+                        <option value="Belanja">🛒 Belanja Bulanan</option>
+                        <option value="Lainnya">📦 Lainnya</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Catatan</label>
+                    <input type="text" id="notes" placeholder="Contoh: Beli Bensin">
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary" id="btnSubmit">Simpan Transaksi</button>
+                    <button type="button" class="btn btn-secondary" id="btnCancel" style="display:none;" onclick="resetForm()">Batal</button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <!-- RIWAYAT TRANSAKSI -->
-    <div class="card" style="overflow-x: auto;">
-        <h3>Riwayat Transaksi</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Tanggal</th>
-                    <th>Tipe</th>
-                    <th>Kategori</th>
-                    <th>Dompet</th>
-                    <th>Nominal</th>
-                    <th>Catatan</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody id="transactionList">
-                <!-- Data transaksi dari IndexedDB akan muncul di sini -->
-            </tbody>
-        </table>
+    <!-- TAB 3: RIWAYAT & TOOLBAR -->
+    <div id="tab-history" class="tab-content">
+        <div class="card">
+            <div class="toolbar">
+                <input type="text" id="searchInput" class="search-box" placeholder="🔍 Cari transaksi..." oninput="render()">
+                <select id="filterType" onchange="render()" style="width: auto;">
+                    <option value="all">Semua Tipe</option>
+                    <option value="income">Pemasukan</option>
+                    <option value="expense">Pengeluaran</option>
+                </select>
+                <button class="btn btn-secondary" onclick="exportCSV()">📥 Ekspor CSV</button>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Tipe</th>
+                            <th>Kategori</th>
+                            <th>Dompet</th>
+                            <th>Nominal</th>
+                            <th>Catatan</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionList"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
     let db;
+    let allData = [];
     const DB_NAME = 'HouseholdFinanceDB';
-    const DB_VERSION = 1;
     const STORE_NAME = 'transactions';
-
-    const form = document.getElementById('transactionForm');
-    const transactionList = document.getElementById('transactionList');
-    const formTitle = document.getElementById('formTitle');
-    const btnSubmit = document.getElementById('btnSubmit');
-    const editIdInput = document.getElementById('editId');
 
     document.getElementById('date').valueAsDate = new Date();
 
-    // 1. Inisialisasi IndexedDB
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    // Navigasi Tab
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+        
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
 
-    request.onupgradeneeded = function(event) {
-        db = event.target.result;
+    // Inisialisasi IndexedDB
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onupgradeneeded = (e) => {
+        db = e.target.result;
         if (!db.objectStoreNames.contains(STORE_NAME)) {
             db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
         }
     };
-
-    request.onsuccess = function(event) {
-        db = event.target.result;
-        render(); // Render data saat DB siap
+    request.onsuccess = (e) => {
+        db = e.target.result;
+        render();
     };
 
-    request.onerror = function(event) {
-        console.error("IndexedDB Error:", event.target.errorCode);
-    };
-
-    // 2. Fungsi Tampilkan / Read Data dari IndexedDB
+    // Render Data
     function render() {
-        const transaction = db.transaction([STORE_NAME], 'readonly');
-        const objectStore = transaction.objectStore(STORE_NAME);
-        const getAllRequest = objectStore.getAll();
-
-        getAllRequest.onsuccess = function() {
-            const items = getAllRequest.result;
-            transactionList.innerHTML = '';
+        const tx = db.transaction([STORE_NAME], 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        
+        store.getAll().onsuccess = (e) => {
+            allData = e.target.result.reverse(); // Terbaru di atas
+            
             let totalIncome = 0;
             let totalExpense = 0;
+            
+            const searchKeyword = document.getElementById('searchInput').value.toLowerCase();
+            const filterType = document.getElementById('filterType').value;
 
-            items.forEach((item) => {
-                const isIncome = item.type === 'income';
-                if (isIncome) totalIncome += item.amount;
+            const listEl = document.getElementById('transactionList');
+            const recentEl = document.getElementById('recentList');
+            
+            listEl.innerHTML = '';
+            recentEl.innerHTML = '';
+
+            const filteredData = allData.filter(item => {
+                const matchesSearch = item.notes.toLowerCase().includes(searchKeyword) || item.category.toLowerCase().includes(searchKeyword);
+                const matchesType = filterType === 'all' || item.type === filterType;
+                return matchesSearch && matchesType;
+            });
+
+            allData.forEach(item => {
+                if (item.type === 'income') totalIncome += item.amount;
                 else totalExpense += item.amount;
+            });
 
+            // Tampilkan Transaksi Terakhir di Dashboard (Maksimal 5)
+            allData.slice(0, 5).forEach(item => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${item.date}</td>
-                    <td><span class="${isIncome ? 'badge-income' : 'badge-expense'}">${isIncome ? 'Pemasukan' : 'Pengeluaran'}</span></td>
                     <td>${item.category}</td>
-                    <td>${item.account}</td>
-                    <td>Rp ${item.amount.toLocaleString('id-ID')}</td>
-                    <td>${item.notes || '-'}</td>
-                    <td>
-                        <button class="btn-edit" onclick="editTransaction(${item.id})">Edit</button>
-                        <button class="btn-delete" onclick="deleteTransaction(${item.id})">Hapus</button>
+                    <td style="font-weight: 600; color: ${item.type === 'income' ? 'var(--success)' : 'var(--danger)'}">
+                        ${item.type === 'income' ? '+' : '-'} Rp ${item.amount.toLocaleString('id-ID')}
                     </td>
                 `;
-                transactionList.appendChild(row);
+                recentEl.appendChild(row);
             });
 
-            const totalBalance = totalIncome - totalExpense;
-            document.getElementById('totalBalance').innerText = `Rp ${totalBalance.toLocaleString('id-ID')}`;
+            // Tampilkan Tabel Riwayat Lengkap
+            filteredData.forEach(item => {
+                const isIncome = item.type === 'income';
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.date}</td>
+                    <td><span class="badge ${isIncome ? 'badge-income' : 'badge-expense'}">${isIncome ? 'Pemasukan' : 'Pengeluaran'}</span></td>
+                    <td>${item.category}</td>
+                    <td>${item.account}</td>
+                    <td style="font-weight: 600;">Rp ${item.amount.toLocaleString('id-ID')}</td>
+                    <td>${item.notes || '-'}</td>
+                    <td>
+                        <button class="btn-action" onclick="editTransaction(${item.id})" title="Edit">✏️</button>
+                        <button class="btn-action" onclick="deleteTransaction(${item.id})" title="Hapus">🗑️</button>
+                    </td>
+                `;
+                listEl.appendChild(row);
+            });
+
+            // Update Ringkasan Saldo
+            document.getElementById('totalBalance').innerText = `Rp ${(totalIncome - totalExpense).toLocaleString('id-ID')}`;
             document.getElementById('totalIncome').innerText = `Rp ${totalIncome.toLocaleString('id-ID')}`;
             document.getElementById('totalExpense').innerText = `Rp ${totalExpense.toLocaleString('id-ID')}`;
         };
     }
 
-    // 3. Simpan / Update Data (Create & Update)
-    form.addEventListener('submit', function(e) {
+    // Simpan / Edit Data
+    document.getElementById('transactionForm').addEventListener('submit', function(e) {
         e.preventDefault();
-
-        const id = editIdInput.value ? Number(editIdInput.value) : null;
+        const id = document.getElementById('editId').value ? Number(document.getElementById('editId').value) : null;
+        
         const transactionData = {
             date: document.getElementById('date').value,
             type: document.getElementById('type').value,
@@ -258,29 +501,27 @@
         };
 
         const tx = db.transaction([STORE_NAME], 'readwrite');
-        const objectStore = tx.objectStore(STORE_NAME);
+        const store = tx.objectStore(STORE_NAME);
 
         if (id) {
             transactionData.id = id;
-            objectStore.put(transactionData); // Mode Update
+            store.put(transactionData);
         } else {
-            objectStore.add(transactionData); // Mode Tambah Baru
+            store.add(transactionData);
         }
 
-        tx.oncomplete = function() {
+        tx.oncomplete = () => {
             render();
             resetForm();
+            switchTab('dashboard');
         };
     });
 
-    // 4. Ambil Data ke Form untuk Edit
+    // Edit Data
     function editTransaction(id) {
         const tx = db.transaction([STORE_NAME], 'readonly');
-        const objectStore = tx.objectStore(STORE_NAME);
-        const getRequest = objectStore.get(id);
-
-        getRequest.onsuccess = function() {
-            const item = getRequest.result;
+        tx.objectStore(STORE_NAME).get(id).onsuccess = (e) => {
+            const item = e.target.result;
             if (item) {
                 document.getElementById('date').value = item.date;
                 document.getElementById('type').value = item.type;
@@ -289,36 +530,51 @@
                 document.getElementById('category').value = item.category;
                 document.getElementById('notes').value = item.notes;
 
-                editIdInput.value = item.id;
-                formTitle.innerText = "Edit Transaksi";
-                btnSubmit.innerText = "Update Transaksi";
-                btnSubmit.style.background = "#f59e0b";
+                document.getElementById('editId').value = item.id;
+                document.getElementById('formTitle').innerText = "Edit Transaksi";
+                document.getElementById('btnSubmit').innerText = "Update Transaksi";
+                document.getElementById('btnCancel').style.display = "inline-block";
+                
+                switchTab('form');
             }
         };
     }
 
-    // 5. Hapus Data (Delete)
+    // Hapus Data
     function deleteTransaction(id) {
         if (confirm("Apakah Anda yakin ingin menghapus transaksi ini?")) {
             const tx = db.transaction([STORE_NAME], 'readwrite');
-            const objectStore = tx.objectStore(STORE_NAME);
-            objectStore.delete(id);
-
-            tx.oncomplete = function() {
-                render();
-                resetForm();
-            };
+            tx.objectStore(STORE_NAME).delete(id);
+            tx.oncomplete = () => render();
         }
     }
 
     // Reset Form
     function resetForm() {
-        form.reset();
-        editIdInput.value = "";
-        formTitle.innerText = "Tambah Transaksi";
-        btnSubmit.innerText = "Simpan Transaksi";
-        btnSubmit.style.background = "var(--primary)";
+        document.getElementById('transactionForm').reset();
+        document.getElementById('editId').value = "";
+        document.getElementById('formTitle').innerText = "Tambah Transaksi Baru";
+        document.getElementById('btnSubmit').innerText = "Simpan Transaksi";
+        document.getElementById('btnCancel').style.display = "none";
         document.getElementById('date').valueAsDate = new Date();
+    }
+
+    // Fitur Ekspor ke CSV
+    function exportCSV() {
+        if (allData.length === 0) return alert("Belum ada data untuk diekspor!");
+        
+        let csvContent = "data:text/csv;charset=utf-8,Tanggal,Tipe,Kategori,Dompet,Nominal,Catatan\n";
+        allData.forEach(row => {
+            csvContent += `${row.date},${row.type},${row.category},${row.account},${row.amount},"${row.notes || ''}"\n`;
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Laporan_Keuangan_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 </script>
 
